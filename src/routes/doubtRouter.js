@@ -35,11 +35,37 @@ doubtRouter.get('/myDoubts', userAuth, async (req, res) => {
 });
 
 
+// Delete own doubt (only if less than 1 hour old)
+doubtRouter.delete('/delete/:id', userAuth, async (req, res) => {
+  try {
+    const doubt = await Doubt.findOne({ _id: req.params.id, userId: req.user._id });
+    
+    if (!doubt) return res.status(403).send("Unauthorized or doubt not found");
 
-// Get all doubts for admin
+    const now = new Date();
+    const oneHour = 60 * 60 * 1000; // 1 hour in milliseconds
+    const timeSinceCreation = now - doubt.createdAt;
+
+    if (timeSinceCreation > oneHour) {
+      return res.status(403).send("❌ Doubt can only be deleted within 1 hour of creation");
+    }
+
+    await doubt.deleteOne(); // or await Doubt.findByIdAndDelete(doubt._id);
+    res.json({ message: "✅ Doubt deleted successfully" });
+
+  } catch (err) {
+    console.error("Error deleting doubt:", err);
+    res.status(500).send("Internal server error");
+  }
+});
+
+
+
+
+// Get all unanswered doubts for admin
 doubtRouter.get('/allDoubts', userAuth, isAdmin, async (req, res) => {
   try {
-    const doubts = await Doubt.find().populate('userId', 'fullName emailId');
+    const doubts = await Doubt.find({ answer: { $in: [null, ""] } }).populate('userId', 'fullName emailId');
     res.json(doubts);
   } catch (err) {
     res.status(500).json({ error: 'Error fetching all doubts' });

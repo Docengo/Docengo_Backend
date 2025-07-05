@@ -57,15 +57,27 @@ authRouter.get('/signup', (req, res) => {
   });
 });
 
-// GET /user – return user info including photoUrl
+// GET /user – return user info and isAdmin status dynamically
 authRouter.get("/user", userAuth, async (req, res) => {
   try {
-    const { fullName, emailId, photoUrl } = req.user;
-    res.json({ fullName, emailId, profileImage: photoUrl });
+    const user = await User.findById(req.user._id).select("fullName emailId photoUrl");
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const isAdmin = user.emailId === process.env.ADMIN_EMAIL;
+
+    res.json({
+      fullName: user.fullName,
+      emailId: user.emailId,
+      profileImage: user.photoUrl,
+      isAdmin, // dynamically checked here
+    });
   } catch (err) {
     res.status(500).send("Failed to fetch user");
   }
 });
+
 
 
 // Login API

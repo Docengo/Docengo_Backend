@@ -22,6 +22,9 @@ app.use("/", authRouter);
 const doubtRouter = require("./routes/doubtRouter.js");
 app.use("/doubt", doubtRouter);
 
+const helpRouter = require("./routes/helpRouter.js");
+app.use("/help", helpRouter);
+
 connectDB()
         .then(() => {
             console.log("Database connection established...");
