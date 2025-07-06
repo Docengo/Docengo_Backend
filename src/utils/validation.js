@@ -10,7 +10,7 @@ const validateSignUpData = (req) => {
         throw new Error("Please enter the name");
     }
     else if(fullName.length < 3 ){
-        throw new Error("Full name should be atleast of 6 characters");
+        throw new Error("Full name should be atleast of 3 characters");
     }
     else if(!validator.isEmail(emailId)){
         throw new Error("Email id is not valid");
