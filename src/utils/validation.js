@@ -9,7 +9,7 @@ const validateSignUpData = (req) => {
     if(!fullName){
         throw new Error("Please enter the name");
     }
-    else if(fullName.length < 6 ){
+    else if(fullName.length < 3 ){
         throw new Error("Full name should be atleast of 6 characters");
     }
     else if(!validator.isEmail(emailId)){
@@ -38,8 +38,36 @@ const validateSignUpData = (req) => {
     
 }
 
+const validateProfileEditData = (data) => {
+  const allowedEditFields = [
+    "fullName",
+    "emailId",
+    "stream",
+    "className",
+    "city",
+    "mobileNumber",
+    "photoUrl",
+  ];
+
+  if (!data || typeof data !== "object") {
+    return { error: new Error("Invalid or missing data object") };
+  }
+
+  const isEditAllowed = Object.keys(data).every((field) =>
+    allowedEditFields.includes(field)
+  );
+
+  if (!isEditAllowed) {
+    return { error: new Error("Some fields are not allowed to be edited") };
+  }
+
+  return { error: null };
+};
+
+
 
 
 module.exports = {
-    validateSignUpData
+    validateSignUpData,
+    validateProfileEditData
 }

@@ -16,6 +16,13 @@ app.use(cookieParser());
 app.use(express.json());
 
 
+const path = require("path");
+app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
+
+
+
+
+
 const authRouter = require("./routes/authRouter.js");
 app.use("/", authRouter);
  
@@ -24,6 +31,12 @@ app.use("/doubt", doubtRouter);
 
 const helpRouter = require("./routes/helpRouter.js");
 app.use("/help", helpRouter);
+
+const profileRouter = require("./routes/profileRouter.js");
+app.use("/profile", profileRouter);
+
+
+
 
 connectDB()
         .then(() => {
