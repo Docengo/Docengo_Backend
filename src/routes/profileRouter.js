@@ -1,38 +1,11 @@
 const express = require("express");
-const multer = require("multer");
-const path = require("path");
 const profileRouter = express.Router();
 const User = require("../models/user");
 const { userAuth } = require("../middlewares/auth");
 const {validateProfileEditData} = require("../utils/validation.js");
-
-  const fs = require("fs");
-
-const uploadDir = path.join(__dirname, "..", "uploads", "profileImages");
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "uploads/profileImages");
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, `${Date.now()}-${file.fieldname}${ext}`);
-  },
-});
-
-const fileFilter = (req, file, cb) => {
-  const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
-  if (allowedTypes.includes(file.mimetype)) cb(null, true);
-  else cb(new Error("Only JPG, PNG, and WEBP files allowed"), false);
-};
-
-const upload = multer({ storage, fileFilter });
-
-
+const { storage } = require('../utils/cloudinary'); // ✅ make sure path is correct
+const multer = require('multer');
+const upload = multer({ storage });
 
 
 
@@ -60,8 +33,8 @@ profileRouter.patch("/edit", userAuth, upload.single("photo"), async (req, res) 
 
     // ✅ Add image URL if uploaded
     if (req.file) {
-      const imageUrl = `${req.protocol}://${req.get("host")}/uploads/profileImages/${req.file.filename}`;
-      updates.photoUrl = imageUrl;
+      // ✅ Use Cloudinary URL directly
+      updates.photoUrl = req.file.path;
     }
 
     // ✅ Validate fields

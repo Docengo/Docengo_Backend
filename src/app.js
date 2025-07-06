@@ -16,13 +16,6 @@ app.use(cookieParser());
 app.use(express.json());
 
 
-const path = require("path");
-app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
-
-
-
-
-
 const authRouter = require("./routes/authRouter.js");
 app.use("/", authRouter);
  
