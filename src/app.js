@@ -1,70 +1,53 @@
 const express = require("express");
-const connectDB = require("./config/database")
-const app = express();
+const connectDB = require("./config/database");
 const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
 const cors = require("cors");
 
-const cors = require("cors");
+const app = express();
 
-const cors = require("cors");
-
+// ✅ Allowed frontend origins
 const allowedOrigins = [
   "http://localhost:5173",
   "https://www.docengo.com",
   "https://docengo.com"
 ];
 
+// ✅ Safe CORS setup — never crashes the server
 const corsOptions = {
   origin: function (origin, callback) {
-    // Handle no origin (like Postman or server-side calls)
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      console.error("Blocked by CORS:", origin);
-      callback(new Error("Not allowed by CORS"));
+      console.warn("⚠️ Blocked by CORS:", origin);
+      callback(null, false); // Don't throw
     }
   },
   credentials: true
 };
 
 app.use(cors(corsOptions));
-
-
 app.use(cookieParser());
 app.use(express.json());
 
+// ✅ Routes
+app.use("/", require("./routes/authRouter"));
+app.use("/doubt", require("./routes/doubtRouter"));
+app.use("/help", require("./routes/helpRouter"));
+app.use("/profile", require("./routes/profileRouter"));
+app.use("/auth", require("./routes/authCheckRouter"));
+app.use("/feedback", require("./routes/feedbackRouter"));
+app.use("/payment", require("./routes/paymentRouter"));
 
-const authRouter = require("./routes/authRouter.js");
-app.use("/", authRouter);
- 
-const doubtRouter = require("./routes/doubtRouter.js");
-app.use("/doubt", doubtRouter);
-
-const helpRouter = require("./routes/helpRouter.js");
-app.use("/help", helpRouter);
-
-const profileRouter = require("./routes/profileRouter.js");
-app.use("/profile", profileRouter);
-
-const authCheckRouter = require("./routes/authCheckRouter.js");
-app.use("/auth", authCheckRouter);
-
-const feedbackRouter = require("./routes/feedbackRouter.js");
-app.use("/feedback", feedbackRouter);
-
-const paymentRouter = require("./routes/paymentRouter.js");
-app.use("/payment", paymentRouter);
-
-
+// ✅ Start the server only after DB connects
 connectDB()
-        .then(() => {
-            console.log("Database connection established...");
-            app.listen(2707, () => {
-            console.log("Server is successfully listening on port 2707");
-            });
-        })
-        .catch((err) => {
-            console.error("Database cannot be connected");
-        });
-
+  .then(() => {
+    console.log("✅ Database connection established...");
+    const PORT = process.env.PORT || 2707;
+    app.listen(PORT, () => {
+      console.log(`✅ Server running on port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error("❌ Database connection failed", err);
+  });
