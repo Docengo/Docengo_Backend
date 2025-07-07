@@ -7,22 +7,28 @@ const cors = require("cors");
 
 const cors = require("cors");
 
+const cors = require("cors");
+
 const allowedOrigins = [
   "http://localhost:5173",
   "https://www.docengo.com",
   "https://docengo.com"
 ];
 
-app.use(cors({
+const corsOptions = {
   origin: function (origin, callback) {
+    // Handle no origin (like Postman or server-side calls)
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
+      console.error("Blocked by CORS:", origin);
       callback(new Error("Not allowed by CORS"));
     }
   },
   credentials: true
-}));
+};
+
+app.use(cors(corsOptions));
 
 
 app.use(cookieParser());
