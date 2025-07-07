@@ -31,6 +31,9 @@ app.use("/profile", profileRouter);
 const authCheckRouter = require("./routes/authCheckRouter.js");
 app.use("/auth", authCheckRouter);
 
+const feedbackRouter = require("./routes/feedbackRouter.js");
+app.use("/feedback", feedbackRouter);
+
 
 connectDB()
         .then(() => {
