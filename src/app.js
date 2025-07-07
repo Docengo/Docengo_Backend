@@ -34,6 +34,9 @@ app.use("/auth", authCheckRouter);
 const feedbackRouter = require("./routes/feedbackRouter.js");
 app.use("/feedback", feedbackRouter);
 
+const paymentRouter = require("./routes/paymentRouter.js");
+app.use("/payment", paymentRouter);
+
 
 connectDB()
         .then(() => {
