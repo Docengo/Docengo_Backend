@@ -20,6 +20,7 @@ doubtRouter.post('/submit', userAuth, async (req, res) => {
     res.status(201).json({ message: 'Doubt submitted successfully' });
   } catch (err) {
     res.status(500).json({ error: 'Failed to submit doubt' });
+    console.log(err)
   }
 });
 
