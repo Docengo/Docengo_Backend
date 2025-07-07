@@ -25,7 +25,7 @@ authRouter.post("/send-otp", async (req, res) => {
 
   try {
     await sendOtpEmail(emailId, otp); // Send OTP to email
-    console.log(`📨 OTP for ${emailId} is: ${otp}`); // For dev
+   
 
     otpStore[emailId] = {
       otp,
