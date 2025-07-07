@@ -1,15 +1,12 @@
 const express = require("express");
 const authRouter = express.Router();
-const {validateSignUpData} = require("../utils/validation.js")
-const User = require("../models/user.js")
+const { validateSignUpData } = require("../utils/validation.js");
+const User = require("../models/user.js");
 const bcrypt = require("bcrypt");
 const { userAuth } = require("../middlewares/auth.js");
 require('dotenv').config();
 const sendOtpEmail = require('../utils/sendOtpEmail'); 
 
-
-
-// ✅ Store OTPs by emailId
 const otpStore = {}; // { [emailId]: { otp, expiresAt } }
 const verifiedEmails = new Set();
 
@@ -17,19 +14,16 @@ const verifiedEmails = new Set();
 authRouter.post("/send-otp", async (req, res) => {
   const { emailId } = req.body;
 
-  if (!emailId) {
-    return res.status(400).json({ error: "Email is required" });
-  }
+  if (!emailId) return res.status(400).json({ error: "Email is required" });
 
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
   try {
-    await sendOtpEmail(emailId, otp); // Send OTP to email
-   
+    await sendOtpEmail(emailId, otp);
 
     otpStore[emailId] = {
       otp,
-      expiresAt: Date.now() + 5 * 60 * 1000, // valid for 5 minutes
+      expiresAt: Date.now() + 5 * 60 * 1000,
     };
 
     res.status(200).json({ message: "OTP sent to your email" });
@@ -42,7 +36,6 @@ authRouter.post("/send-otp", async (req, res) => {
 // ✅ Verify OTP
 authRouter.post("/verify-otp", (req, res) => {
   const { emailId, otp } = req.body;
-
   const record = otpStore[emailId];
 
   if (!record) return res.status(400).json({ error: "OTP not sent" });
@@ -50,27 +43,23 @@ authRouter.post("/verify-otp", (req, res) => {
   if (record.otp !== otp) return res.status(400).json({ error: "Invalid OTP" });
 
   verifiedEmails.add(emailId);
-  delete otpStore[emailId]; // cleanup
+  delete otpStore[emailId];
 
   res.status(200).json({ message: "OTP verified" });
 });
 
-// ✅ Signup route (with email OTP verification)
+// ✅ Signup with Secure Cookie
 authRouter.post("/signup", async (req, res) => {
   try {
     const adminEmail = process.env.ADMIN_EMAIL;
     const { fullName, emailId, password, stream, city, mobileNumber, className } = req.body;
-
     const isAdmin = emailId === adminEmail;
 
-    // OTP verification check (skip for admin)
     if (!isAdmin && !verifiedEmails.has(emailId)) {
       return res.status(403).json({ error: "Please verify OTP before signing up" });
     }
 
-    if (!isAdmin) {
-      validateSignUpData(req);
-    }
+    if (!isAdmin) validateSignUpData(req);
 
     const passwordHash = await bcrypt.hash(password, 10);
 
@@ -88,10 +77,13 @@ authRouter.post("/signup", async (req, res) => {
     const token = await savedUser.getJWT();
 
     res.cookie("token", token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "None",
       expires: new Date(Date.now() + 8 * 3600000),
     });
 
-    verifiedEmails.delete(emailId); // cleanup
+    verifiedEmails.delete(emailId);
 
     res.json({ message: "User added successfully", data: savedUser });
   } catch (err) {
@@ -99,8 +91,6 @@ authRouter.post("/signup", async (req, res) => {
   }
 });
 
-
-// Example using Express
 authRouter.get('/signup', (req, res) => {
   res.json({
     streams: ['JEE', 'NEET', 'Other'],
@@ -108,13 +98,11 @@ authRouter.get('/signup', (req, res) => {
   });
 });
 
-// GET /user – return user info and isAdmin status dynamically
+// ✅ Get current user info
 authRouter.get("/user", userAuth, async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select("fullName emailId photoUrl");
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
+    if (!user) return res.status(404).json({ error: "User not found" });
 
     const isAdmin = user.emailId === process.env.ADMIN_EMAIL;
 
@@ -122,66 +110,59 @@ authRouter.get("/user", userAuth, async (req, res) => {
       fullName: user.fullName,
       emailId: user.emailId,
       profileImage: user.photoUrl,
-      isAdmin, // dynamically checked here
+      isAdmin,
     });
   } catch (err) {
     res.status(500).send("Failed to fetch user");
   }
 });
 
-
-
-// Login API
+// ✅ Login with Secure Cookie
 authRouter.post("/login", async (req, res) => {
   try {
     const { emailId, password } = req.body;
 
     const user = await User.findOne({ emailId });
-    if (!user) {
-      throw new Error("Invalid credentials");
-    }
+    if (!user) throw new Error("Invalid credentials");
 
     const isPasswordValid = await user.validatePassword(password);
+    if (!isPasswordValid) throw new Error("Incorrect Password");
 
-    if (isPasswordValid) {
-      const token = await user.getJWT();
+    const token = await user.getJWT();
 
-      res.cookie("token", token, {
-        httpOnly: true,
-        expires: new Date(Date.now() + 8 * 3600000),
-      });
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "None",
+      expires: new Date(Date.now() + 8 * 3600000),
+    });
 
-       // Check for admin email
-      const isAdmin = emailId === process.env.ADMIN_EMAIL;
+    const isAdmin = emailId === process.env.ADMIN_EMAIL;
 
-      res.send({
-        message: isAdmin ? "Welcome Admin" : "Login successful",
-        token, // ✅ Send token to frontend
-        user: {
-          _id: user._id,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          emailId: user.emailId,
-        },
-      });
-    } else {
-      throw new Error("Incorrect Password");
-    }
+    res.send({
+      message: isAdmin ? "Welcome Admin" : "Login successful",
+      token,
+      user: {
+        _id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        emailId: user.emailId,
+      },
+    });
   } catch (err) {
     res.status(400).send("Error logging in: " + err.message);
   }
 });
 
-//Logout API
+// ✅ Logout
 authRouter.post("/logout", async (req, res) => {
   res.clearCookie("token", {
     httpOnly: true,
-    secure: false,       // Set to true in production with HTTPS
-    sameSite: "lax",
-    path: "/",           // ✅ MUST specify the same path as when it was set
+    secure: true,
+    sameSite: "None",
+    path: "/",
   });
   res.status(200).send("Logout successful!!");
 });
-
 
 module.exports = authRouter;
