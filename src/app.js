@@ -5,12 +5,25 @@ const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
 const cors = require("cors");
 
-app.use(
-  cors({
-    origin: "http://localhost:5173", // your frontend origin
-    credentials: true,
-  })
-);
+const cors = require("cors");
+
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://www.docengo.com",
+  "https://docengo.com"
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true
+}));
+
 
 app.use(cookieParser());
 app.use(express.json());
