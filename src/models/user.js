@@ -25,20 +25,34 @@ const userSchema = new mongoose.Schema({
     },
   },
   stream: {
-    type: String,
-    required: function () {
-      return this.emailId !== process.env.ADMIN_EMAIL;
+  type: String,
+  enum: ["JEE", "NEET", "Other"],
+  default: "Other",
+  validate: {
+    validator: function (value) {
+      // Only validate presence if not admin
+      if (this.emailId !== process.env.ADMIN_EMAIL && !value) {
+        return false;
+      }
+      return true;
     },
-    enum: ["JEE", "NEET", "Other"],
-    default: "Other",
+    message: "Stream is required for non-admin users",
   },
-  className:{
-    type: String,
-    required: function () {
-      return this.emailId !== process.env.ADMIN_EMAIL;
+},
+className: {
+  type: String,
+  enum: ["IX", "X", "XI", "XII", "Dropper"],
+  validate: {
+    validator: function (value) {
+      if (this.emailId !== process.env.ADMIN_EMAIL && !value) {
+        return false;
+      }
+      return true;
     },
-    enum: ["IX", "X", "XI", "XII", "Dropper"],
+    message: "Class is required for non-admin users",
   },
+},
+
   city: {
     type: String,
     required: true,
