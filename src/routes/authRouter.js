@@ -86,9 +86,12 @@ authRouter.post("/signup", async (req, res) => {
     verifiedEmails.delete(emailId);
 
     res.json({ message: "User added successfully", data: savedUser });
-  } catch (err) {
-    res.status(400).send("Error saving the user: " + err.message);
   }
+ catch (err) {
+  console.error("❌ Signup failed:", err.message);
+  res.status(400).json({ error: err.message });
+}
+
 });
 
 authRouter.get('/signup', (req, res) => {

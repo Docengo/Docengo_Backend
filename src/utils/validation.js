@@ -16,7 +16,13 @@ const validateSignUpData = (req) => {
         throw new Error("Email id is not valid");
     }
     else if(!validator.isStrongPassword(password)){
-        throw new Error("Enter a strong password");
+        throw new Error("Enter a strong password.\n" +   "It should contain at least:\n" +
+           "- 8 characters\n" +
+           "- 1 lowercase letter\n" +
+           "- 1 uppercase letter\n" +
+           "- 1 number\n" +
+           "- 1 special symbol (e.g. !@#$%^&*)");
+          
     }
         
      else if (!stream || !allowedStreams.includes(stream)) {
